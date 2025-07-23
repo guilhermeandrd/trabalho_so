@@ -1,0 +1,19 @@
+comparações
+
+2 threads parciais
+
+4 threads parciais
+
+6
+
+8
+
+16
+
+32
+
+64
+
+128
+
+256
