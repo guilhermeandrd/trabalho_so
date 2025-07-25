@@ -53,6 +53,8 @@ void * producer ( void * args ) {
         // acessar buffer compartilhado ( produzir )
         buffer[in] = item;
         // imprimir TID / dados
+
+        //TODO usar pthread_self
         printf("[Produtor %ld] Inseriu R$ %d na posição %d.\n", tid, item, in);
         in = (in + 1) % TAMANHO_BUFFER;
         // --- Fim da Seção Crítica ---
