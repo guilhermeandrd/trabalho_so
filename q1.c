@@ -5,27 +5,36 @@
 #include <time.h>        
 #include <semaphore.h>   
 
+//configuracao inicial que vai ser usada
 #define TAMANHO_BUFFER 5   
 #define NUM_PRODUTORES 3
 #define NUM_CONSUMIDORES 1 
 
+//buffer com os valore a serem usados
 int item[TAMANHO_BUFFER]; 
 int idx = 0;               
 
+//mutex e semaforos
 pthread_mutex_t mutex_buffer;   
 sem_t empty;                    
 sem_t full;                     
 
 pthread_mutex_t mutex_ativos;   
+
+//flags para verificacao e gerenciamento
 int num_produtores_ativos = 0; 
 
 int total_vendas_consumidas = 0; 
 
+//TODO isso realmente eh necessario?
+// estrutura que contem o id da caixa na qual esta ocerrendo o processo
+// e o total de vendas que serão produzidas
 typedef struct {
     int id_caixa;
     int total_vendas_a_produzir;
 } produtor_args_t;
 
+//funcao que gera um numero aleatorio dado um numero maximo e minimo
 int aleatorio(int min, int max) {
     return (rand() % (max - min + 1)) + min;
 }
@@ -123,8 +132,17 @@ void* consumidora(void* args) {
 }
 
 int main(void) {
+
+    //usada para gerar numeros sempre aleatorios 
+    //o que significa que toda execução terá dados diferentes
+    //ou ao menos a chance disso ocorrer
     srand(time(NULL)); 
 
+    /**
+     * inicializamos o mutex do buffer
+     * o mutex dos produtores ativos
+     * o semaforo da 
+     */
     pthread_mutex_init(&mutex_buffer, NULL); 
     pthread_mutex_init(&mutex_ativos, NULL);
     sem_init(&empty, 0, TAMANHO_BUFFER); 

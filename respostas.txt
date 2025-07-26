@@ -1,0 +1,2 @@
+(g) Repita a questão com 6 threads produtoras e 2 consumidoras. O projeto ficou mais
+complicado? Se sim, quais desafios você enfrentou? Forneça uma justificativa.

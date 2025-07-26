@@ -11,6 +11,9 @@
 #define ITENS_POR_PRODUTOR 8
 #define LOTE_CONSUMO 5 // O consumidor vai esperar por 5 itens
 
+
+//TODO falta pthread_cond
+
 // --- Variáveis Globais para Sincronização e Buffer ---
 int buffer[TAMANHO_BUFFER];
 int in = 0;  // Posição de inserção (produtor)
