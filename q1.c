@@ -27,6 +27,7 @@ int num_produtores_ativos = 0;
 int total_vendas_consumidas = 0; 
 
 //TODO isso realmente eh necessario?
+//TODO usar pthread_cond
 // estrutura que contem o id da caixa na qual esta ocerrendo o processo
 // e o total de vendas que serão produzidas
 typedef struct {
@@ -44,6 +45,7 @@ void* produtora(void* args) {
     int id_caixa = p_args->id_caixa;
     int vendas_restantes = p_args->total_vendas_a_produzir;
 
+    //protecao do mutex
     pthread_mutex_lock(&mutex_ativos);
     num_produtores_ativos++; 
     pthread_mutex_unlock(&mutex_ativos);
@@ -82,6 +84,8 @@ void* consumidora(void* args) {
     printf("(C) TID: %d iniciado.\n", id_consumidor);
 
     while (1) {
+
+        //protecao do mutex
         pthread_mutex_lock(&mutex_buffer);
         if (num_produtores_ativos == 0 && (idx - total_vendas_consumidas) == 0) { 
             pthread_mutex_unlock(&mutex_buffer);
@@ -154,6 +158,8 @@ int main(void) {
     for (int i = 0; i < NUM_PRODUTORES; ++i) {
         produtor_args_t* args = (produtor_args_t*)malloc(sizeof(produtor_args_t));
         args->id_caixa = i + 1;
+        
+        //produz um numero de itens aleatorio (entre 20 e 30)
         args->total_vendas_a_produzir = aleatorio(20, 30); 
         pthread_create(&produtor_threads[i], NULL, produtora, (void*)args);
     }

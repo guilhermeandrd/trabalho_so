@@ -19,9 +19,8 @@ pthread_mutex_t mutex; // Apenas um mutex é necessário para proteger o buffer
 sem_t empty;           // Semáforo para contar posições vazias
 sem_t full;            // Semáforo para contar posições cheias
 
-// Função para gerar número aleatório //TODO acho que essa funcao eh desnecessaria
+// Função para gerar número aleatório
 
-//TODO ajeitar impressão dos dados
 int aleatorio(int min, int max) {
     return (rand() % (max - min + 1)) + min;
 }

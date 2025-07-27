@@ -12,7 +12,7 @@ Ao final do programa, o valor calculado e o tempo empregado deve ser mostrado.*/
 void *formulaleibniz(void *args){
 
     //alocamos pi na heap (dinamicamente)
-    //assim não ficamos dependendo da stack //TODO verificar se é isso mesmo
+    //assim não ficamos dependendo da stack
     double *pi = malloc(sizeof(double));
     
     *pi = 0.0;
