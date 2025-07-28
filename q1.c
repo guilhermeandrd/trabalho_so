@@ -15,8 +15,14 @@ int item[TAMANHO_BUFFER];
 int idx = 0;               
 
 //mutex e semaforos
-pthread_mutex_t mutex_buffer;   
-sem_t empty;                    
+pthread_mutex_t mutex_buffer;
+
+//TODO mudar esta lógica para lidar com pthread_cond
+sem_t empty;          
+
+//usada para eficiente esperar //TODO
+pthread_cond_t nova_venda;
+
 sem_t full;                     
 
 pthread_mutex_t mutex_ativos;   
@@ -149,6 +155,10 @@ int main(void) {
      */
     pthread_mutex_init(&mutex_buffer, NULL); 
     pthread_mutex_init(&mutex_ativos, NULL);
+
+    //inicia pthread_cond
+    pthread_cond_init(&nova_venda, NULL);
+
     sem_init(&empty, 0, TAMANHO_BUFFER); 
     sem_init(&full, 0, 0);               
 
@@ -171,15 +181,17 @@ int main(void) {
     }
     printf("\n--- Todas as threads produtoras finalizaram. ---\n");
 
-    for (int i = 0; i < TAMANHO_BUFFER + NUM_PRODUTORES + 5; ++i) { 
+    /*for (int i = 0; i < TAMANHO_BUFFER + NUM_PRODUTORES + 5; ++i) { 
         sem_post(&full); 
-    }
+    }*/
 
     pthread_join(consumidor_thread, NULL);
     printf("\n--- A thread consumidora finalizou. ---\n");
 
+    //liberação de memória
     pthread_mutex_destroy(&mutex_buffer); 
     pthread_mutex_destroy(&mutex_ativos);
+    pthread_cond_destroy(&nova_venda);
     sem_destroy(&empty); 
     sem_destroy(&full); 
 
