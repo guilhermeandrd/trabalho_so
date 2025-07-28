@@ -17,13 +17,12 @@ int idx = 0;
 //mutex e semaforos
 pthread_mutex_t mutex_buffer;
 
-//TODO mudar esta lógica para lidar com pthread_cond
+//
 sem_t empty;          
 
-//usada para eficiente esperar //TODO
+//usada para eficiente esperar
 pthread_cond_t nova_venda;
 
-sem_t full;                     
 
 pthread_mutex_t mutex_ativos;   
 
@@ -32,9 +31,7 @@ int num_produtores_ativos = 0;
 
 int total_vendas_consumidas = 0; 
 
-//TODO isso realmente eh necessario?
-//TODO usar pthread_cond
-// estrutura que contem o id da caixa na qual esta ocerrendo o processo
+// estrutura que contem o id da caixa na qual esta ocorrendo o processo
 // e o total de vendas que serão produzidas
 typedef struct {
     int id_caixa;
@@ -66,10 +63,20 @@ void* produtora(void* args) {
         item[idx % TAMANHO_BUFFER] = valor_venda; 
         printf("(P) TID: %d | VALOR: R$ %d | Pos: %d | Restantes: %d\n", 
                id_caixa, valor_venda, idx % TAMANHO_BUFFER, vendas_restantes); 
-        idx++; 
+        idx++;
 
-        pthread_mutex_unlock(&mutex_buffer); 
-        sem_post(&full); 
+
+        //verificamos se buffer encheu
+        if ((idx - total_vendas_consumidas) == TAMANHO_BUFFER) {
+            printf("(P) TID: %d, Buffer ENCHEU. Sinalizando consumidor...\n", id_caixa);
+
+            //usamos pthread_cond_signal para sinalizar que buffer encheu
+            //importante para consumidor
+            pthread_cond_signal(&nova_venda); 
+        }
+
+        // A liberação do mutex vem depois da checagem e do possível sinal
+        pthread_mutex_unlock(&mutex_buffer);
 
         sleep(aleatorio(1, 3)); 
     }
@@ -89,56 +96,61 @@ void* consumidora(void* args) {
 
     printf("(C) TID: %d iniciado.\n", id_consumidor);
 
-    while (1) {
+    while(1){
 
-        //protecao do mutex
-        pthread_mutex_lock(&mutex_buffer);
-        if (num_produtores_ativos == 0 && (idx - total_vendas_consumidas) == 0) { 
-            pthread_mutex_unlock(&mutex_buffer);
-            sem_post(&full); 
-            break; 
-        }
-        pthread_mutex_unlock(&mutex_buffer);
+            // Dentro do laço while(1) da sua consumidora
 
-        for (int k = 0; k < TAMANHO_BUFFER; k++) {
-            sem_wait(&full); 
-        }
+        pthread_mutex_lock(&mutex_buffer); // Tranca a porta
 
-        pthread_mutex_lock(&mutex_buffer);
+        // Enquanto o buffer NÃO estiver cheio...
+        while ((idx - total_vendas_consumidas) < TAMANHO_BUFFER) {
 
-        int itens_buffer = idx - total_vendas_consumidas; 
+            // Adicionar uma condição de término aqui é importante. E se os
+            // produtores terminarem e deixarem o buffer com apenas 3 itens?
+            // O consumidor ficaria esperando para sempre.
+            if (num_produtores_ativos == 0 && (idx - total_vendas_consumidas) > 0) {
+                // Se não há mais produtores e há itens no buffer, saia do laço
+                // para processar o lote final, mesmo que incompleto.
+                printf("(C) Produtores inativos, processando lote final de %d itens.\n", (idx - total_vendas_consumidas));
+                break; 
+            } else if (num_produtores_ativos == 0 && (idx - total_vendas_consumidas) == 0) {
+                // Se não há mais produtores e o buffer está vazio, termine.
+                printf("(C) Produtores inativos e buffer vazio. Finalizando.\n");
 
-        if (num_produtores_ativos == 0 && itens_buffer < TAMANHO_BUFFER) { 
-            for (int k = 0; k < TAMANHO_BUFFER; k++) {
-                sem_post(&full); 
+                printf("(C) TID: %d finalizou\n", id_consumidor);
+
+                pthread_mutex_unlock(&mutex_buffer);
+                pthread_exit(NULL);
             }
-            pthread_mutex_unlock(&mutex_buffer);
-            break; 
-        }
 
-        double soma_lote = 0.0; 
-        
-        for (int k = 0; k < TAMANHO_BUFFER; k++) {
-            soma_lote += item[total_vendas_consumidas % TAMANHO_BUFFER]; 
-            total_vendas_consumidas++; 
+            printf("(C) Buffer não está cheio (%d/%d). Esperando sinal...\n", (idx - total_vendas_consumidas), TAMANHO_BUFFER);
+            // Dorme e espera o sinal de "buffer cheio".
+            pthread_cond_wait(&nova_venda, &mutex_buffer);
+        }
+        printf("(C) Buffer cheio! Processando lote.\n");
+        double soma_lote = 0.0;
+        int itens_a_processar = idx - total_vendas_consumidas; // Pode ser 5 ou menos no lote final
+    
+        // O seu laço 'for' para consumir o lote estava correto, mas vamos adaptá-lo
+        // para consumir o número exato de itens.
+        for (int k = 0; k < itens_a_processar; k++) {
+            soma_lote += item[total_vendas_consumidas % TAMANHO_BUFFER];
+            total_vendas_consumidas++;
         }
         iteracao_consumo++;
-
-        double media_lote = soma_lote / TAMANHO_BUFFER; 
-        printf("(C) TID: %d | MEDIA: R$ %.2f | ITERACAO: %d\n",
-               id_consumidor, media_lote, iteracao_consumo); 
-
-        pthread_mutex_unlock(&mutex_buffer);
-
-        for (int k = 0; k < TAMANHO_BUFFER; k++) {
-            sem_post(&empty); 
+    
+        double media_lote = soma_lote / itens_a_processar; 
+        printf("(C) TID: %d | MEDIA DO LOTE: R$ %.2f | ITERACAO: %d\n",
+            id_consumidor, media_lote, iteracao_consumo); 
+    
+        pthread_mutex_unlock(&mutex_buffer); // Destranca a porta
+    
+        // Avisa que os espaços foram liberados
+        for (int k = 0; k < itens_a_processar; k++) {
+            sem_post(&empty); // Sinaliza 'itens_a_processar' vezes
         }
-
-        usleep(100000); 
     }
 
-    printf("(C) TID: %d finalizou\n", id_consumidor);
-    pthread_exit(NULL);
 }
 
 int main(void) {
@@ -160,7 +172,6 @@ int main(void) {
     pthread_cond_init(&nova_venda, NULL);
 
     sem_init(&empty, 0, TAMANHO_BUFFER); 
-    sem_init(&full, 0, 0);               
 
     pthread_t produtor_threads[NUM_PRODUTORES];
     pthread_t consumidor_thread;
@@ -179,11 +190,10 @@ int main(void) {
     for (int i = 0; i < NUM_PRODUTORES; ++i) {
         pthread_join(produtor_threads[i], NULL);
     }
+
     printf("\n--- Todas as threads produtoras finalizaram. ---\n");
 
-    /*for (int i = 0; i < TAMANHO_BUFFER + NUM_PRODUTORES + 5; ++i) { 
-        sem_post(&full); 
-    }*/
+    pthread_cond_signal(&nova_venda);
 
     pthread_join(consumidor_thread, NULL);
     printf("\n--- A thread consumidora finalizou. ---\n");
@@ -193,7 +203,6 @@ int main(void) {
     pthread_mutex_destroy(&mutex_ativos);
     pthread_cond_destroy(&nova_venda);
     sem_destroy(&empty); 
-    sem_destroy(&full); 
 
     printf("\n--- Sistema Gerenciador de Caixas Finalizado com Sucesso! ---\n");
 
