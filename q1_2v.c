@@ -25,8 +25,6 @@ sem_t empty;
 pthread_cond_t nova_venda;
 
 
-pthread_mutex_t mutex_ativos;   
-
 //flags para verificacao e gerenciamento
 int num_produtores_ativos = 0; 
 
@@ -55,9 +53,9 @@ void* produtora(void* args) {
     int vendas_restantes = p_args->total_vendas_a_produzir;
 
     //protecao do mutex
-    pthread_mutex_lock(&mutex_ativos);
+    pthread_mutex_lock(&mutex_buffer);
     num_produtores_ativos++; 
-    pthread_mutex_unlock(&mutex_ativos);
+    pthread_mutex_unlock(&mutex_buffer);
 
     printf("(P) TID: %d iniciado. Irá produzir %d itens.\n", id_caixa, vendas_restantes);
 
@@ -87,9 +85,9 @@ void* produtora(void* args) {
         sleep(aleatorio(1, 3)); 
     }
 
-    pthread_mutex_lock(&mutex_ativos);
+    pthread_mutex_lock(&mutex_buffer);
     num_produtores_ativos--; 
-    pthread_mutex_unlock(&mutex_ativos);
+    pthread_mutex_unlock(&mutex_buffer);
 
     
     printf("(P) TID: %d finalizou\n", id_caixa);
@@ -185,7 +183,6 @@ int main(void) {
      * o semaforo da 
      */
     pthread_mutex_init(&mutex_buffer, NULL); 
-    pthread_mutex_init(&mutex_ativos, NULL);
 
     //inicia pthread_cond
     pthread_cond_init(&nova_venda, NULL);
@@ -230,7 +227,6 @@ int main(void) {
 
     //liberação de memória
     pthread_mutex_destroy(&mutex_buffer); 
-    pthread_mutex_destroy(&mutex_ativos);
     pthread_cond_destroy(&nova_venda);
     sem_destroy(&empty); 
 
