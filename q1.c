@@ -17,8 +17,6 @@ int idx = 0;
 //mutex e semaforos
 pthread_mutex_t mutex_buffer;
 
-//TODO ver só aquele negócio de iniciar com threads conectadas
-//TODO e depois ir conectando conforme precisa
 sem_t empty;          
 
 //usada para eficiente esperar

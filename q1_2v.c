@@ -98,13 +98,18 @@ void* produtora(void* args) {
     pthread_exit(NULL);
 }
 
-//deixar parecida com a consumidora
+//TODO deixar parecida com a produtora
 void* consumidora(void* args) { 
-    //fazer alocao de consumidores
+
     int id_consumidor = 1; 
     int iteracao_consumo = 0;
 
     printf("(C) TID: %d iniciado.\n", id_consumidor);
+
+    /**
+     * estratégia : 
+     * buffer cheio, mas 
+     */
 
     while(1){
 
@@ -184,7 +189,7 @@ int main(void) {
     sem_init(&empty, 0, TAMANHO_BUFFER); 
 
     pthread_t produtor_threads[NUM_PRODUTORES];
-    pthread_t consumidor_thread;
+    pthread_t consumidor_thread[NUM_CONSUMIDORES];
 
     for (int i = 0; i < NUM_PRODUTORES; ++i) {
         produtor_args_t* args = (produtor_args_t*)malloc(sizeof(produtor_args_t));
@@ -195,7 +200,13 @@ int main(void) {
         pthread_create(&produtor_threads[i], NULL, produtora, (void*)args);
     }
 
-    pthread_create(&consumidor_thread, NULL, consumidora, NULL);
+    for (int i = 0; i < NUM_CONSUMIDORES; ++i) {
+        produtor_args_t* args = (produtor_args_t*)malloc(sizeof(produtor_args_t));
+        args->id_caixa = i + 1;
+        
+        pthread_create(&consumidor_thread[i], NULL, consumidora, (void*)args);
+    }
+
 
     for (int i = 0; i < NUM_PRODUTORES; ++i) {
         pthread_join(produtor_threads[i], NULL);
@@ -205,8 +216,11 @@ int main(void) {
 
     pthread_cond_signal(&nova_venda);
 
-    pthread_join(consumidor_thread, NULL);
-    printf("\n--- A thread consumidora finalizou. ---\n");
+    for (int i = 0; i < NUM_CONSUMIDORES; ++i) {
+        pthread_join(consumidor_thread[i], NULL);
+    }
+
+    printf("\n--- Todas as thread consumidoras finalizaram. ---\n");
 
     //liberação de memória
     pthread_mutex_destroy(&mutex_buffer); 
