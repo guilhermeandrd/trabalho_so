@@ -7,7 +7,8 @@
 
 //configuracao inicial que vai ser usada
 #define TAMANHO_BUFFER 5   
-#define NUM_PRODUTORES 3
+//TODO mudar pra 6
+#define NUM_PRODUTORES 6
 #define NUM_CONSUMIDORES 1 
 
 //buffer com os valore a serem usados
@@ -17,8 +18,7 @@ int idx = 0;
 //mutex e semaforos
 pthread_mutex_t mutex_buffer;
 
-//TODO ver só aquele negócio de iniciar com threads conectadas
-//TODO e depois ir conectando conforme precisa
+//
 sem_t empty;          
 
 //usada para eficiente esperar
@@ -38,6 +38,12 @@ typedef struct {
     int id_caixa;
     int total_vendas_a_produzir;
 } produtor_args_t;
+
+//TODO não sei se isso é útil realmente
+typedef struct{
+    int id_caixa;
+    int total_itens_a_consumir;
+} consumidor_args_t;
 
 //funcao que gera um numero aleatorio dado um numero maximo e minimo
 int aleatorio(int min, int max) {
@@ -91,7 +97,9 @@ void* produtora(void* args) {
     pthread_exit(NULL);
 }
 
+//deixar parecida com a consumidora
 void* consumidora(void* args) { 
+    //fazer alocao de consumidores
     int id_consumidor = 1; 
     int iteracao_consumo = 0;
 
