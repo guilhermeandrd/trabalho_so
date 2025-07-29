@@ -9,6 +9,7 @@
 #define TAMANHO_BUFFER 5   
 //TODO mudar pra 6
 #define NUM_PRODUTORES 6
+//TODO alterar lógica para lidar com 2 consumidores
 #define NUM_CONSUMIDORES 1 
 
 //buffer com os valore a serem usados
