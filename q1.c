@@ -17,6 +17,8 @@ int idx = 0;
 //mutex e semaforos
 pthread_mutex_t mutex_buffer;
 
+//serve para impedir o produtor de adcionar itens
+//ao buffer cheio
 sem_t empty;          
 
 //usada para eficiente esperar
@@ -55,7 +57,12 @@ void* produtora(void* args) {
     printf("(P) TID: %d iniciado. Irá produzir %d itens.\n", id_caixa, vendas_restantes);
 
     while(vendas_restantes-- > 0) { 
+
+        //verifica se ainda há vagos, se o contador interno > 0
+        //se for, decrementa e deixa passar
+        //se não, espera surgir uma vaga enquanto produtora é suspensa
         sem_wait(&empty); 
+
         pthread_mutex_lock(&mutex_buffer); 
 
         int valor_venda = aleatorio(1, 1000);
@@ -153,9 +160,10 @@ void* consumidora(void* args) {
     
         pthread_mutex_unlock(&mutex_buffer); // Destranca a porta
     
-        // Avisa que os espaços foram liberados
         for (int k = 0; k < itens_a_processar; k++) {
-            sem_post(&empty); // Sinaliza 'itens_a_processar' vezes
+            //avisa que o item foi processado, logo uma vaga foi liberada
+            //ou seja, incrementa o contador interno
+            sem_post(&empty);
         }
 
     }
@@ -172,7 +180,7 @@ int main(void) {
     /**
      * inicializamos o mutex do buffer
      * o mutex dos produtores ativos
-     * o semaforo empty //TODO isso seria o que mesmo?
+     * o semaforo empty 
      * inicia pthread_cond
      */
     pthread_mutex_init(&mutex_buffer, NULL); 

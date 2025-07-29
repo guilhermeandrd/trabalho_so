@@ -6,15 +6,14 @@
 #include <semaphore.h>   
 
 //configuracao inicial que vai ser usada
-#define TAMANHO_BUFFER 5   
-//TODO mudar pra 6
+#define TAMANHO_BUFFER 8
+
 #define NUM_PRODUTORES 6
-//TODO alterar lógica para lidar com 2 consumidores
-#define NUM_CONSUMIDORES 1 
+#define NUM_CONSUMIDORES 2
 
 //buffer com os valore a serem usados
 int item[TAMANHO_BUFFER]; 
-int idx = 0;               
+int idx = 0;               //TODO o que seria isso aqui
 
 //mutex e semaforos
 pthread_mutex_t mutex_buffer;
@@ -40,10 +39,9 @@ typedef struct {
     int total_vendas_a_produzir;
 } produtor_args_t;
 
-//TODO não sei se isso é útil realmente
 typedef struct{
     int id_caixa;
-    int total_itens_a_consumir;
+    int iteracao_consumo;
 } consumidor_args_t;
 
 //funcao que gera um numero aleatorio dado um numero maximo e minimo
@@ -93,6 +91,7 @@ void* produtora(void* args) {
     num_produtores_ativos--; 
     pthread_mutex_unlock(&mutex_ativos);
 
+    
     printf("(P) TID: %d finalizou\n", id_caixa);
 
     pthread_exit(NULL);
@@ -101,8 +100,10 @@ void* produtora(void* args) {
 //TODO deixar parecida com a produtora
 void* consumidora(void* args) { 
 
-    int id_consumidor = 1; 
-    int iteracao_consumo = 0;
+    consumidor_args_t* c_args = (consumidor_args_t*)args;
+    int id_consumidor = c_args->id_caixa; 
+
+    int iteracao_consumo = c_args->iteracao_consumo;
 
     printf("(C) TID: %d iniciado.\n", id_consumidor);
 
@@ -113,7 +114,7 @@ void* consumidora(void* args) {
 
     while(1){
 
-            // Dentro do laço while(1) da sua consumidora
+        // Dentro do laço while(1) da sua consumidora
 
         pthread_mutex_lock(&mutex_buffer); // Tranca a porta
 
@@ -132,6 +133,8 @@ void* consumidora(void* args) {
                 // Se não há mais produtores e o buffer está vazio, termine.
                 printf("(C) Produtores inativos e buffer vazio. Finalizando.\n");
 
+                printf("(C) TID: %d | TOTAL DE ITERACAO: %d\n",
+            id_consumidor, iteracao_consumo);
                 printf("(C) TID: %d finalizou\n", id_consumidor);
 
                 pthread_mutex_unlock(&mutex_buffer);
@@ -168,6 +171,7 @@ void* consumidora(void* args) {
 
 }
 
+//TODO lembrar de liberar memória com free (as da struct que eu aloquei)
 int main(void) {
 
     //usada para gerar numeros sempre aleatorios 
@@ -201,8 +205,9 @@ int main(void) {
     }
 
     for (int i = 0; i < NUM_CONSUMIDORES; ++i) {
-        produtor_args_t* args = (produtor_args_t*)malloc(sizeof(produtor_args_t));
+        consumidor_args_t* args = (consumidor_args_t*)malloc(sizeof(consumidor_args_t));
         args->id_caixa = i + 1;
+        args->iteracao_consumo = 0;
         
         pthread_create(&consumidor_thread[i], NULL, consumidora, (void*)args);
     }
@@ -214,8 +219,9 @@ int main(void) {
 
     printf("\n--- Todas as threads produtoras finalizaram. ---\n");
 
-    pthread_cond_signal(&nova_venda);
-
+    
+    pthread_cond_broadcast(&nova_venda);
+    
     for (int i = 0; i < NUM_CONSUMIDORES; ++i) {
         pthread_join(consumidor_thread[i], NULL);
     }
