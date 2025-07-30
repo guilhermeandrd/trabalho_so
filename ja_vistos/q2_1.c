@@ -5,7 +5,7 @@ Ao final do programa, o valor calculado e o tempo empregado deve ser mostrado.*/
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 
 #define NUM_TERMS 2000000000
 
@@ -36,7 +36,8 @@ int main() {
     void *ret_pi;
 
     
-    clock_t inicio = clock();
+    struct timeval inicio, fim;
+    gettimeofday(&inicio, NULL);
     
     pthread_create(&t,NULL, &formulaleibniz, NULL);
     
@@ -52,14 +53,11 @@ int main() {
 
     pi *= 4;
 
-    clock_t fim = clock();
+    gettimeofday(&fim, NULL);
 
-    double duracao = (double) fim - inicio;
-
-    duracao /= CLOCKS_PER_SEC;
-
+    long duracao = (fim.tv_sec - inicio.tv_sec) *  1000000 + (fim.tv_usec - inicio.tv_usec);
     
     printf("Aproximação de PI com %lld termos: %.10f\n", (long long) NUM_TERMS, pi);
-    printf("Em tempo de %.4f  segundos\n", duracao);
+    printf("Em tempo de %.4ld  microsegundos\n", duracao);
     return 0;
 }

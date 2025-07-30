@@ -94,7 +94,7 @@ void* produtora(void* args) {
 
     printf("(P) TID: %d finalizou\n", id_caixa);
 
-    pthread_exit(NULL);
+    pthread_exit(NULL);//return void
 }
 
 void* consumidora(void* args) { 
@@ -176,7 +176,6 @@ int main(void) {
 
     /**
      * inicializamos o mutex do buffer
-     * o mutex dos produtores ativos
      * o semaforo empty 
      * inicia pthread_cond
      */

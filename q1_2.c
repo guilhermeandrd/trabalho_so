@@ -6,7 +6,7 @@
 #include <semaphore.h>   
 
 //configuracao inicial que vai ser usada
-#define TAMANHO_BUFFER 8
+#define TAMANHO_BUFFER 5
 
 #define NUM_PRODUTORES 6
 #define NUM_CONSUMIDORES 2
@@ -18,7 +18,7 @@ int idx = 0;               //TODO o que seria isso aqui
 //mutex e semaforos
 pthread_mutex_t mutex_buffer;
 
-//
+
 sem_t empty;          
 
 //usada para eficiente esperar
@@ -95,7 +95,6 @@ void* produtora(void* args) {
     pthread_exit(NULL);
 }
 
-//TODO deixar parecida com a produtora
 void* consumidora(void* args) { 
 
     consumidor_args_t* c_args = (consumidor_args_t*)args;
@@ -104,11 +103,6 @@ void* consumidora(void* args) {
     int iteracao_consumo = c_args->iteracao_consumo;
 
     printf("(C) TID: %d iniciado.\n", id_consumidor);
-
-    /**
-     * estratégia : 
-     * buffer cheio, mas 
-     */
 
     while(1){
 

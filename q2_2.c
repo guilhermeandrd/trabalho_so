@@ -15,12 +15,12 @@ tempo empregado pelo processo e a soma dos tempos das threads.*/
 #define NUM_THREADS 16
 #define PARTIAL_NUM_TERMS ((NUM_TERMS)/(NUM_THREADS))
 
-struct ret_partial
+typedef struct
 {
     long duracao_partial;
 
     double pi_partial;
-};
+} ret_partial;
 
 
 //essa é a função que realmente calcula a formula
@@ -45,32 +45,33 @@ double partialFormula ( int first_therm ) {
 
 void * partialProcessing ( void * args ) {
 
+    struct timeval inicio, fim;
+
     int first_therm = *(( int *) args ) ;
 
     // obter tempo de inicio
-    clock_t inicio = clock();
-
+    gettimeofday(&inicio, NULL);
+    
     double sum = partialFormula ( first_therm ) ;
 
     //TODO acredito que falte essa parte do buffer
     // acessar buffer compartilhado
 
     // obter tempo de fim
-    clock_t fim = clock();
+    gettimeofday(&fim, NULL);
 
     // mostrar TID e tempo empregado
+    long d = (fim.tv_sec - inicio.tv_sec) *  1000000 + (fim.tv_usec - inicio.tv_usec);
 
-    double d = (double) fim-inicio;
-    d = d/CLOCKS_PER_SEC;
-
-    printf("TID: %ld em tempo de %.4f segundos \n",pthread_self(), d);
+    
+    printf("TID: %ld em tempo de %ld microsegundos \n",pthread_self(), d);
 
 
-    double *ret_pi_partial = malloc(sizeof(double));
 
-    *ret_pi_partial = sum;
-
-    pthread_exit(ret_pi_partial);
+    ret_partial* r = malloc(sizeof(ret_partial));
+    r->pi_partial = sum;
+    r->duracao_partial = d;
+    pthread_exit(r);
 }
 
 int main ( void ) {
@@ -79,18 +80,15 @@ int main ( void ) {
     pthread_t t_partials [NUM_THREADS];
 
     //vetor de retornos das threads
-    void* ret_pi[NUM_THREADS];
+    void* rets[NUM_THREADS];
 
     //vetor dos valores de retornos que serão convertidos
     double pi_partial[NUM_THREADS];
 
-    struct ret_partial rets [NUM_THREADS];
 
-
-    // obter tempo de inicio
+    //para tempo de duracao das threads de maneira integra
+    long duracao_total = 0;
     
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
 
     for ( long long int i = 0; i < NUM_THREADS ; i ++) {
         // criar threads parciais
@@ -105,20 +103,26 @@ int main ( void ) {
     double pi = 0.0;
 
     // esperar threads terminarem
-    for(long long int i=0; i < NUM_THREADS; i++){
-        pthread_join(t_partials[i], &ret_pi[i]);
+    for(int i=0; i < NUM_THREADS; i++){
+        pthread_join(t_partials[i], &rets[i]);
 
         //"transforma" o valor que void estava apontando em double
         //armazena em pi_partial
-        double pi_partial = *(double*) ret_pi[i];
+
+        ret_partial ret = *(ret_partial*) rets[i];
+
+        double pi_partial_i = ret.pi_partial;
+        long duracao_partial_i = ret.duracao_partial;
 
         //soma em pi que é o que realmente importa
         //no sentido de ser o resultado final
-        pi += pi_partial;
+        pi += pi_partial_i;
+        duracao_total += duracao_partial_i;
+        
+        //libera memória
+        free(rets[i]);
     }
 
-    // obter tempo de fim
-    gettimeofday(&end, NULL);
 
     //ajusta valor do pi
     pi *= 4;
@@ -126,9 +130,8 @@ int main ( void ) {
     // mostrar resultado e tempo emprego
     printf("Resultado final: %.10f \n", pi);
 
-    long duracao = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
 
-    printf("Duracao %ld microsegundos", duracao);
+    printf("Duracao total foi %ld microsegundos", duracao_total);
 
     return 0;
 }
