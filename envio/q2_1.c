@@ -57,7 +57,7 @@ int main() {
 
     long duracao = (fim.tv_sec - inicio.tv_sec) *  1000000 + (fim.tv_usec - inicio.tv_usec);
     
-    printf("Aproximação de PI com %lld termos: %.10f\n", (long long) NUM_TERMS, pi);
+    printf("Aproximação de PI com %lld termos: %.9f\n", (long long) NUM_TERMS, pi);
     printf("Em tempo de %.4ld  microsegundos\n", duracao);
     return 0;
 }

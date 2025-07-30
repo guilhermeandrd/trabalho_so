@@ -12,15 +12,15 @@ tempo empregado pelo processo e a soma dos tempos das threads.*/
 #include <sys/time.h>
 
 #define NUM_TERMS 2000000000
-#define NUM_THREADS 128000
+#define NUM_THREADS 16
 #define PARTIAL_NUM_TERMS ((NUM_TERMS)/(NUM_THREADS))
 
-typedef struct
-{
-    long duracao_partial;
+//variável global para pi
+double pi = 0.0;
 
-    double pi_partial;
-} ret_partial;
+pthread_mutex_t mutex_pi;
+
+long duracao_total = 0;
 
 
 //essa é a função que realmente calcula a formula
@@ -54,19 +54,23 @@ void * partialProcessing ( void * args ) {
     
     double sum = partialFormula ( first_therm ) ;
 
+    
     // obter tempo de fim
     gettimeofday(&fim, NULL);
-
+    
     // mostrar TID e tempo empregado
     long d = (fim.tv_sec - inicio.tv_sec) *  1000000 + (fim.tv_usec - inicio.tv_usec);
+
+    //protege acesso do buffer
+    pthread_mutex_lock(&mutex_pi);
+    pi += sum;
+    duracao_total += d;
+    pthread_mutex_unlock(&mutex_pi);
 
     
     printf("TID: %ld em tempo de %ld microsegundos \n",pthread_self(), d);
 
-    ret_partial* r = malloc(sizeof(ret_partial));
-    r->pi_partial = sum;
-    r->duracao_partial = d;
-    pthread_exit(r);
+    pthread_exit(NULL);
 }
 
 int main ( void ) {
@@ -84,9 +88,7 @@ int main ( void ) {
     //vetor dos valores de retornos que serão convertidos
     double pi_partial[NUM_THREADS];
 
-
-    //para tempo de duracao das threads de maneira integra
-    long duracao_total = 0;
+    pthread_mutex_init(&mutex_pi, NULL);
     
 
     for ( long long int i = 0; i < NUM_THREADS ; i ++) {
@@ -98,28 +100,9 @@ int main ( void ) {
         pthread_create(&t_partials[i], NULL, &partialProcessing, it);
     }
 
-    //cria variavel pi para armazenar soma de pi parciais
-    double pi = 0.0;
-
     // esperar threads terminarem
-    for(int i=0; i < NUM_THREADS; i++){
-        pthread_join(t_partials[i], &rets[i]);
-
-        //"transforma" o valor que void estava apontando em double
-        //armazena em pi_partial
-
-        ret_partial ret = *(ret_partial*) rets[i];
-
-        double pi_partial_i = ret.pi_partial;
-        long duracao_partial_i = ret.duracao_partial;
-
-        //soma em pi que é o que realmente importa
-        //no sentido de ser o resultado final
-        pi += pi_partial_i;
-        duracao_total += duracao_partial_i;
-        
-        //libera memória
-        free(rets[i]);
+    for(long long int i=0; i < NUM_THREADS; i++){
+        pthread_join(t_partials[i], NULL);
     }
 
 
@@ -131,12 +114,14 @@ int main ( void ) {
     long d_total = (end.tv_sec - inicio.tv_sec) * 1000000 + (end.tv_usec - inicio.tv_usec);
 
     // mostrar resultado e tempo emprego
-    printf("Resultado final: %.10f \n", pi);
+    printf("Resultado final: %.9f \n", pi);
 
 
     printf("Duracao total das threads foi %ld microsegundos \n", duracao_total);
 
     printf("Duração total de todo o processo sem contar soma de threads foi %ld microsegundos \n", d_total);
+
+    pthread_mutex_destroy(&mutex_pi);
 
     return 0;
 }
