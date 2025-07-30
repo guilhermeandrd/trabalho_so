@@ -35,10 +35,8 @@ int main() {
     pthread_t t;
     void *ret_pi;
 
+    
     clock_t inicio = clock();
-
-    //não precimaos de id pois thread é única //TODO verificar
-
     
     pthread_create(&t,NULL, &formulaleibniz, NULL);
     

@@ -9,7 +9,7 @@ tempo empregado pelo processo e a soma dos tempos das threads.*/
 #include <stdlib.h>
 #include <pthread.h>
 #include <stdio.h>
-#include <time.h>
+#include <sys/time.h>
 
 #define NUM_TERMS 2000000000
 #define NUM_THREADS 16
@@ -17,7 +17,7 @@ tempo empregado pelo processo e a soma dos tempos das threads.*/
 
 struct ret_partial
 {
-    clock_t duracao_partial;
+    long duracao_partial;
 
     double pi_partial;
 };
@@ -52,6 +52,7 @@ void * partialProcessing ( void * args ) {
 
     double sum = partialFormula ( first_therm ) ;
 
+    //TODO acredito que falte essa parte do buffer
     // acessar buffer compartilhado
 
     // obter tempo de fim
@@ -87,7 +88,9 @@ int main ( void ) {
 
 
     // obter tempo de inicio
-    clock_t inicio = clock();
+    
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
 
     for ( long long int i = 0; i < NUM_THREADS ; i ++) {
         // criar threads parciais
@@ -115,13 +118,17 @@ int main ( void ) {
     }
 
     // obter tempo de fim
-    clock_t fim = clock();
+    gettimeofday(&end, NULL);
 
     //ajusta valor do pi
     pi *= 4;
 
     // mostrar resultado e tempo emprego
     printf("Resultado final: %.10f \n", pi);
+
+    long duracao = (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_usec - start.tv_usec);
+
+    printf("Duracao %ld microsegundos", duracao);
 
     return 0;
 }
