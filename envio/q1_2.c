@@ -79,7 +79,6 @@ void* produtora(void* args) {
             pthread_cond_signal(&nova_venda); 
         }
 
-        // A liberação do mutex vem depois da checagem e do possível sinal
         pthread_mutex_unlock(&mutex_buffer);
 
         sleep(aleatorio(1, 3)); 
@@ -106,25 +105,21 @@ void* consumidora(void* args) {
 
     while(1){
 
-        // Dentro do laço while(1) da sua consumidora
 
-        pthread_mutex_lock(&mutex_buffer); // Tranca a porta
+        pthread_mutex_lock(&mutex_buffer); 
 
-        // Enquanto o buffer NÃO estiver cheio...
         while ((idx - total_vendas_consumidas) < TAMANHO_BUFFER) {
 
-            // Adicionar uma condição de término aqui é importante. E se os
-            // produtores terminarem e deixarem o buffer com apenas 3 itens?
-            // O consumidor ficaria esperando para sempre.
+           
             if (num_produtores_ativos == 0 && (idx - total_vendas_consumidas) > 0) {
-                // Se não há mais produtores e há itens no buffer, saia do laço
-                // para processar o lote final, mesmo que incompleto.
+             
                 printf("(C) Produtores inativos, processando lote final de %d itens.\n", (idx - total_vendas_consumidas));
                 break; 
             } else if (num_produtores_ativos == 0 && (idx - total_vendas_consumidas) == 0) {
-                // Se não há mais produtores e o buffer está vazio, termine.
+
                 printf("(C) Produtores inativos e buffer vazio. Finalizando.\n");
 
+                //ultima mensagem de saída
                 printf("(C) TID: %d | TOTAL DE ITERACAO: %d\n",
             id_consumidor, iteracao_consumo);
                 printf("(C) TID: %d finalizou\n", id_consumidor);
@@ -134,15 +129,13 @@ void* consumidora(void* args) {
             }
 
             printf("(C) Buffer não está cheio (%d/%d). Esperando sinal...\n", (idx - total_vendas_consumidas), TAMANHO_BUFFER);
-            // Dorme e espera o sinal de "buffer cheio".
+
             pthread_cond_wait(&nova_venda, &mutex_buffer);
         }
         printf("(C) Buffer cheio! Processando lote.\n");
         double soma_lote = 0.0;
-        int itens_a_processar = idx - total_vendas_consumidas; // Pode ser 5 ou menos no lote final
+        int itens_a_processar = idx - total_vendas_consumidas; 
     
-        // O seu laço 'for' para consumir o lote estava correto, mas vamos adaptá-lo
-        // para consumir o número exato de itens.
         for (int k = 0; k < itens_a_processar; k++) {
             soma_lote += item[total_vendas_consumidas % TAMANHO_BUFFER];
             total_vendas_consumidas++;
@@ -153,11 +146,10 @@ void* consumidora(void* args) {
         printf("(C) TID: %d | MEDIA DO LOTE: R$ %.2f | ITERACAO: %d\n",
             id_consumidor, media_lote, iteracao_consumo); 
     
-        pthread_mutex_unlock(&mutex_buffer); // Destranca a porta
+        pthread_mutex_unlock(&mutex_buffer); 
     
-        // Avisa que os espaços foram liberados
         for (int k = 0; k < itens_a_processar; k++) {
-            sem_post(&empty); // Sinaliza 'itens_a_processar' vezes
+            sem_post(&empty);
         }
     }
 
@@ -173,14 +165,10 @@ int main(void) {
 
     /**
      * inicializamos o mutex do buffer
-     * o mutex dos produtores ativos
      * o semaforo da 
      */
     pthread_mutex_init(&mutex_buffer, NULL); 
-
-    //inicia pthread_cond
     pthread_cond_init(&nova_venda, NULL);
-
     sem_init(&empty, 0, TAMANHO_BUFFER); 
 
     pthread_t produtor_threads[NUM_PRODUTORES];

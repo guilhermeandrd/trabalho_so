@@ -12,7 +12,7 @@ tempo empregado pelo processo e a soma dos tempos das threads.*/
 #include <sys/time.h>
 
 #define NUM_TERMS 2000000000
-#define NUM_THREADS 16
+#define NUM_THREADS 128000
 #define PARTIAL_NUM_TERMS ((NUM_TERMS)/(NUM_THREADS))
 
 typedef struct
@@ -44,7 +44,7 @@ double partialFormula ( int first_therm ) {
 }
 
 void * partialProcessing ( void * args ) {
-
+    
     struct timeval inicio, fim;
 
     int first_therm = *(( int *) args ) ;
@@ -53,9 +53,6 @@ void * partialProcessing ( void * args ) {
     gettimeofday(&inicio, NULL);
     
     double sum = partialFormula ( first_therm ) ;
-
-    //TODO acredito que falte essa parte do buffer
-    // acessar buffer compartilhado
 
     // obter tempo de fim
     gettimeofday(&fim, NULL);
@@ -66,8 +63,6 @@ void * partialProcessing ( void * args ) {
     
     printf("TID: %ld em tempo de %ld microsegundos \n",pthread_self(), d);
 
-
-
     ret_partial* r = malloc(sizeof(ret_partial));
     r->pi_partial = sum;
     r->duracao_partial = d;
@@ -75,6 +70,10 @@ void * partialProcessing ( void * args ) {
 }
 
 int main ( void ) {
+
+    struct timeval inicio, end;
+
+    gettimeofday(&inicio, NULL);
 
     //vetor de threads
     pthread_t t_partials [NUM_THREADS];
@@ -127,11 +126,17 @@ int main ( void ) {
     //ajusta valor do pi
     pi *= 4;
 
+    gettimeofday(&end, NULL);
+
+    long d_total = (end.tv_sec - inicio.tv_sec) * 1000000 + (end.tv_usec - inicio.tv_usec);
+
     // mostrar resultado e tempo emprego
     printf("Resultado final: %.10f \n", pi);
 
 
-    printf("Duracao total foi %ld microsegundos", duracao_total);
+    printf("Duracao total das threads foi %ld microsegundos \n", duracao_total);
+
+    printf("Duração total de todo o processo sem contar soma de threads foi %ld microsegundos \n", d_total);
 
     return 0;
 }

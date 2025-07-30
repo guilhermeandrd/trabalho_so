@@ -81,7 +81,6 @@ void* produtora(void* args) {
             pthread_cond_signal(&nova_venda); 
         }
 
-        // A liberação do mutex vem depois da checagem e do possível sinal
         pthread_mutex_unlock(&mutex_buffer);
 
         //delay de 1 a 5 segundos

@@ -1,0 +1,36 @@
+(g) Repita a questão com 6 threads produtoras e 2 consumidoras. O projeto ficou mais
+complicado? Se sim, quais desafios você enfrentou? Forneça uma justificativa.
+Resposta: ficou mais complicado, porque tivemos que pensar em estratégias para os consumidores
+lidar com o buffer, de maneira que haja uma ordem de acesso. Conseguimos através de pthread_cond.
+Também tivemos um pouco de dificuldade em entender como isso ocorre, qual acessa primeiro, entre outras
+coisas. Fora isso, tudo ocorreu bem.
+
+
+TABELA DOS TESTES PARA FÓRMULA LEIBNZ
+
+O código foi rodado 100 vezes para warm-up.
+Em seguida, foi rodado 800 vezes para ser calculada sua média de execução.
+E aqui está o resultado que encontramos.
+
+Para solução sequencial = 5253025 microsegundos.
+
+Para solução com threads:
+16: 1.353.559 microssegundos. Redução de 74.23%
+
+32: 1.356.051 microssegundos. Redução de 74.19%
+
+64: 1.350.024 microssegundos. Redução de 74.30%
+
+128: 1.338.200 microssegundos. Redução de 74.53%
+
+356: 1.329.935 microssegundos. Redução de 74.68%
+
+512: 1.338.992 microssegundos. Redução de 74.51%
+
+1024: 1.351.753 microssegundos. Redução de 74.27%
+
+...
+
+128000: 5.893.436 microssegundos. Neste ponto, não há mais redução. 
+O tempo aumentou 12.19%, tornando-se menos eficaz que a solução sequencial.
+
