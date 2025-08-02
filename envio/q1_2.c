@@ -13,7 +13,7 @@
 
 //buffer com os valore a serem usados
 int item[TAMANHO_BUFFER]; 
-int idx = 0;               //TODO o que seria isso aqui
+int idx = 0;               
 
 //mutex e semaforos
 pthread_mutex_t mutex_buffer;
